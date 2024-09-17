@@ -8,6 +8,7 @@ void proyectoSensiaBridge::open_device(ArvCameraPrivate *camera_priv, const char
 
     // Intentar abrir el dispositivo
     camera_priv->device = arv_open_device(objetivoDeviceId, &error);
+    std::cout << "Si esto es CERO: "  << objetivoDeviceId  << std::endl;
 
     // Verificar si ocurrió un error
     if (error != nullptr) {
@@ -71,14 +72,14 @@ namespace proyectoSensiaBridge {
                 std::string str(device_model);
 
                 if (str == strU3v) {
-                    std::cout << "ERES MI OBJETIVO!!!!! " << std::endl;
+                    std::cout << "ERES MI OBJETIVO!!!!! " << str << std::endl;
                     objetivoDeviceId = device_id;
                     std::string str2(device_serial);
                     strnameDispositivo = str2;
                 }
             }
             try {
-                std::cout << "PREVIO A OPEN DEVICE... " << std::endl;
+                std::cout << "PREVIO A OPEN DEVICE... vamos a intentar abrir: " << objetivoDeviceId << std::endl;
 
                 proyectoSensiaBridge::open_device(priv, objetivoDeviceId);
 
@@ -173,12 +174,30 @@ void list_features (ArvGc *genicam, const char *feature, int list_mode, GRegex *
         {
             const GSList *features;
             const GSList *iter;
+            GError *error;
 
             features = arv_gc_category_get_features (ARV_GC_CATEGORY (node));
 
-            for (iter = features; iter != NULL; iter = iter->next)
-                    std::cout << "list_features: " << (const char *) iter->data << std::endl;
-                    list_features (genicam, (const char *) iter->data, list_mode, match ? NULL : regex, level + 1);
+            for (iter = features; iter != NULL; iter = iter->next) {
+                if (arv_gc_feature_node_get_imposed_access_mode (ARV_GC_FEATURE_NODE (node)) == ARV_GC_ACCESS_MODE_RW) {
+                    
+                    std::cout << "list_XXXXX: " << (const char *) iter->data << std::endl;
+                    if (arv_gc_feature_node_is_available (ARV_GC_FEATURE_NODE (node), &error) ) {
+                        try {
+                            std::cout << "list_saco tool tip: " << arv_gc_feature_node_get_tooltip (ARV_GC_FEATURE_NODE (node)) << std::endl;
+                        } catch (...) {
+                            std::cout << error->message << std::endl;
+                        }
+                    } else  {
+                        std::cout << "list_ que no estoy " << std::endl; }
+                    
+                } 
+                else
+                {
+                    std::cout << "listo: Pues entro por lo que no es locked. ... " << " " << (const char *) iter->data << std::endl;
+                }
+                list_features (genicam, (const char *) iter->data, list_mode, match ? NULL : regex, level + 1);
+            }
         }
     }
 }
